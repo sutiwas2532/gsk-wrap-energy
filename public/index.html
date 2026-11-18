@@ -33,6 +33,11 @@ header{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-t
 .st i{width:7px;height:7px;border-radius:50%;background:#f5b041;box-shadow:0 0 8px #f5b041}
 .st.on i{background:var(--good);box-shadow:0 0 8px var(--good)}
 header img{height:18px}
+.hr{display:flex;align-items:center;gap:10px;position:relative;z-index:5}
+.lg{display:flex;border:1px solid #ffffff38;border-radius:999px;overflow:hidden;background:#0a1226b3;backdrop-filter:blur(10px)}
+.lg button{border:0;background:transparent;color:#dfe8ffb3;font:600 11px/1 var(--mono);letter-spacing:.12em;padding:7px 10px;cursor:pointer}
+.lg button.on{background:var(--cyan);color:#04101f}
+html[data-l=en] body [lang=th],html:not([data-l=en]) body [lang=en]{display:none!important}
 
 #v{position:absolute;inset:0;padding:calc(env(safe-area-inset-top,0px) + 56px) 22px calc(env(safe-area-inset-bottom,0px) + 26px);display:flex;flex-direction:column;gap:14px;text-align:center}
 .k{font:500 10.5px/1.4 var(--mono);letter-spacing:.32em;color:var(--cyan);text-transform:uppercase}
@@ -51,6 +56,7 @@ p{margin:0;color:var(--dim);font-weight:300}
 .team img{width:64px;height:64px;position:relative}
 .team span{position:relative;font:600 18px/1.1 var(--disp);letter-spacing:.06em;color:var(--c)}
 .team small{display:block;margin-top:5px;font:300 13px/1 var(--th);color:var(--dim);letter-spacing:0}
+.team small span{font:inherit;color:inherit;letter-spacing:inherit}
 .team em{position:relative;font:400 18px/1 var(--mono);font-style:normal;color:#ffffff80}
 .team:active{transform:scale(.98)}
 
@@ -93,7 +99,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 <body>
 <div class="app" id="app">
   <div class="bg"></div><div class="tint"></div><div class="glow"></div><div class="grain"></div>
-  <header><span class="st" id="st"><i></i><span id="stt">กำลังหา LED</span></span><img src="assets/gsk_logo.webp" alt="GSK"></header>
+  <header><span class="st" id="st"><i></i><span id="stt"><span lang="th">กำลังหา LED</span><span lang="en">Finding LED</span></span></span><span class="hr"><span class="lg" role="group" aria-label="Language"><button type="button" data-l="th">TH</button><button type="button" data-l="en">EN</button></span><img src="assets/gsk_logo.webp" alt="GSK"></span></header>
   <div id="v"></div>
 </div>
 <script>
@@ -120,8 +126,15 @@ const BUS=(()=>{let id;try{id=sessionStorage.getItem('rk-id')}catch(e){}if(!id){
  const NET=RT('phone',id,deliver);
  return{id,net:NET,send(m){m.from=id;if(m.team==null&&typeof my!=='undefined'&&my!=null)m.team=my;m.mid=id+Math.random().toString(36).slice(2,9);if(bc)bc.postMessage(m);NET.send(m);if(parent!==window)try{parent.postMessage({__rk:m},'*')}catch(e){}},on(h){hs.push(h)}}})();
 
+/* language: TH / EN, chosen on each phone (remembered). Every text is written in both languages and CSS shows one,
+   so switching is instant, also for text the LED sends. INNOVATE / EXECUTE / ACCELERATE stay in English in both. */
+const B=(th,en)=>`<span lang="th">${th}</span><span lang="en">${en}</span>`;
+let LANG=(()=>{const q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='th')return q;try{return localStorage.getItem('rk-lang')||'th'}catch(e){return 'th'}})();
+function setLang(l){LANG=l;document.documentElement.dataset.l=l;document.documentElement.lang=l;try{localStorage.setItem('rk-lang',l)}catch(e){}document.querySelectorAll('.lg button').forEach(b=>b.classList.toggle('on',b.dataset.l===l))}
+document.querySelectorAll('.lg button').forEach(b=>b.onclick=()=>{setLang(b.dataset.l);buzz(10)});
+setLang(LANG);
 const A='assets/';
-const T=[{k:'innovate',name:'INNOVATE',th:'ทีมฟ้า',c:'#4fd8ff'},{k:'execute',name:'EXECUTE',th:'ทีมขาว',c:'#f4f7ff'},{k:'accelerate',name:'ACCELERATE',th:'ทีมส้ม',c:'#ff7a1a'}];
+const T=[{k:'innovate',name:'INNOVATE',th:B('ทีมฟ้า','Cyan team'),c:'#4fd8ff'},{k:'execute',name:'EXECUTE',th:B('ทีมขาว','White team'),c:'#f4f7ff'},{k:'accelerate',name:'ACCELERATE',th:B('ทีมส้ม','Orange team'),c:'#ff7a1a'}];
 const BADGE=i=>A+'badge_'+T[i].k+'.webp', ROCKET=i=>A+'rocket_'+T[i].k+'.webp';
 const $=id=>document.getElementById(id);
 let my=null,cur=null,linked=false,answers={},taps={},qTimer=null;
@@ -131,12 +144,12 @@ const H=h=>{V.innerHTML=h};
 const tc=c=>app.style.setProperty('--tc',c);
 
 function picker(){app.classList.remove('tapping');
- H(`<div class="k rv">GSK Kickoff 2027 · Boarding</div><h1 class="rv" style="--d:.1s">เลือก<b>ทีม</b>ตามที่ MC ประกาศ</h1><div class="sp"></div>
+ H(`<div class="k rv">GSK Kickoff 2027 · Boarding</div><h1 class="rv" style="--d:.1s">${B('เลือก<b>ทีม</b>ตามที่ MC ประกาศ','Pick the <b>team</b> the MC announces')}</h1><div class="sp"></div>
  ${T.map((t,i)=>`<button class="team rv" style="--c:${t.c};--d:${.2+i*.12}s" data-i="${i}"><img src="${BADGE(i)}" alt=""><span>${t.name}<small>${t.th}</small></span><em>›</em></button>`).join('')}<div class="sp"></div>`);
  V.querySelectorAll('.team').forEach(b=>b.onclick=()=>{my=+b.dataset.i;tc(T[my].c);BUS.send({t:'join',team:my});buzz(20);render(cur||{v:'board'})})}
 
 function tapView(label,msg,live,key,k,ch){app.classList.add('tapping');taps[key]=taps[key]||0;
- H(`<div class="k">${k||''}</div>${ch||chip()}<p id="pm">${msg||''}</p><div class="orbw" id="ow"><button class="orb" id="orb" ${live?'':'disabled'}>${label}</button></div><div class="num" id="tn">${taps[key]}</div><p>ครั้งที่คุณแตะ</p>`);
+ H(`<div class="k">${k||''}</div>${ch||chip()}<p id="pm">${msg||''}</p><div class="orbw" id="ow"><button class="orb" id="orb" ${live?'':'disabled'}>${label}</button></div><div class="num" id="tn">${taps[key]}</div><p>${B('ครั้งที่คุณแตะ','your taps')}</p>`);
  $('orb').addEventListener('pointerdown',e=>{e.preventDefault();const ok=(cur.v==='tap'&&cur.live)||cur.v==='roar'||(cur.v==='final'&&cur.phase==='go');if(!ok)return;taps[key]++;$('tn').textContent=taps[key];tapQ++;buzz(8);
   const r=document.createElement('span');r.className='rip';$('ow').appendChild(r);setTimeout(()=>r.remove(),600)})}
 let tapQ=0;setInterval(()=>{if(tapQ){BUS.send({t:'tap',n:tapQ});tapQ=0}},200);
@@ -160,44 +173,45 @@ setInterval(()=>{if(!PM.on)return;const d=PM.db();if(!isFinite(d)||d<-140)return
  PM.ph=ph;
  if(ph!=='go'){PM.amb=d<PM.amb?PM.amb*.8+d*.2:PM.amb+Math.min(d-PM.amb,.02);return}
  const n=Math.max(0,Math.min(1,(d-PM.amb-6)/30));if(Date.now()-(PM.ls||0)>=240){PM.ls=Date.now();BUS.send({t:'lvl',v:+n.toFixed(3)})}const b=document.getElementById('mym');if(b)b.style.width=n*100+'%'},120);
-const micBtn=()=>`<button class="ans" id="micb" style="display:flex;justify-content:center;gap:8px;font-size:15px;padding:14px;border-color:var(--orange)">${PM.err?'เปิดไมค์ไม่ได้ ลองแตะอีกครั้ง':'🎤 แตะเพื่อเปิดไมค์ (ใช้ในด่านตะโกน)'}</button>`;
-function bindMic(){const b=document.getElementById('micb');if(b)b.onclick=()=>{b.textContent='กำลังเปิดไมค์…';PM.start()}}
+const micBtn=()=>`<button class="ans" id="micb" style="display:flex;justify-content:center;gap:8px;font-size:15px;padding:14px;border-color:var(--orange)">${PM.err?B('เปิดไมค์ไม่ได้ ลองแตะอีกครั้ง','Mic didn’t open. Tap to try again'):'🎤 '+B('แตะเพื่อเปิดไมค์ (ใช้ในด่านตะโกน)','Tap to turn on the mic (for the shout stage)')}</button>`;
+function bindMic(){const b=document.getElementById('micb');if(b)b.onclick=()=>{b.innerHTML=B('กำลังเปิดไมค์…','Opening mic…');PM.start()}}
 function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
 
+const fmsg=v=>v.phase==='count'?B('นับพร้อมกัน… ','Count together… ')+v.c:v.phase==='go'?B('แตะรัวๆ พร้อมกันทั้งห้อง!','Whole room, tap fast together!'):B('รอนับถอยหลังพร้อมกันทั้งห้อง','Wait for the whole-room countdown');
 function render(v){cur=v;clearInterval(qTimer);
  if(my==null&&v.v!=='final'){picker();return}
  if(my!=null)tc(T[my].c);
  app.classList.remove('tapping');
  const t=my!=null?T[my]:null;
  switch(v.v){
- case 'board':H(`<div class="k rv">Boarding complete</div>${chip()}<h1 class="rv" style="--d:.15s">ขึ้นยาน<b>เรียบร้อย</b></h1><p class="rv" style="--d:.25s">มองจอใหญ่ รอ MC เริ่มภารกิจ</p><div class="sp"></div><img class="hero" style="--c:${t.c}" src="${ROCKET(my)}" alt=""><div class="sp"></div>${PM.on?'':micBtn()}<button class="ans" id="sw" style="justify-content:center;display:flex;font-size:14px;padding:12px">เปลี่ยนทีม</button>`);bindMic();$('sw').onclick=()=>{my=null;picker()};break;
+ case 'board':H(`<div class="k rv">Boarding complete</div>${chip()}<h1 class="rv" style="--d:.15s">${B('ขึ้นยาน<b>เรียบร้อย</b>','You’re <b>on board</b>')}</h1><p class="rv" style="--d:.25s">${B('มองจอใหญ่ รอ MC เริ่มภารกิจ','Watch the big screen and wait for the MC to start')}</p><div class="sp"></div><img class="hero" style="--c:${t.c}" src="${ROCKET(my)}" alt=""><div class="sp"></div>${PM.on?'':micBtn()}<button class="ans" id="sw" style="justify-content:center;display:flex;font-size:14px;padding:12px">${B('เปลี่ยนทีม','Change team')}</button>`);bindMic();$('sw').onclick=()=>{my=null;picker()};break;
  case 'wait':H(`<div class="k rv">${v.k}</div>${chip()}<div class="sp"></div><h1 class="rv" style="--d:.15s">${v.h}</h1><p class="rv" style="--d:.25s">${v.p||''}</p><div class="sp"></div>${String(v.k).startsWith('STAGE 03')&&!PM.on?micBtn():''}`);bindMic();break;
  case 'quiz':{const sel=answers[v.qk];
-  H(`<div class="k">${v.k}</div>${chip()}<h1 class="rv" style="font-size:22px">${v.q}</h1>${v.a.map((a,j)=>`<button class="ans rv ${sel===j?'sel':''}" style="--d:${.1+j*.08}s" data-j="${j}" ${sel!=null?'disabled':''}><b>${'ABC'[j]}</b>${a}</button>`).join('')}<div class="sp"></div><div class="tline"><div id="ql"></div></div><p id="qs">${sel!=null?'ส่งคำตอบแล้ว ลุ้นที่จอใหญ่':'เลือกคำตอบภายใน '+v.dur+' วินาที'}</p>`);
+  H(`<div class="k">${v.k}</div>${chip()}<h1 class="rv" style="font-size:22px">${v.q}</h1>${v.a.map((a,j)=>`<button class="ans rv ${sel===j?'sel':''}" style="--d:${.1+j*.08}s" data-j="${j}" ${sel!=null?'disabled':''}><b>${'ABC'[j]}</b>${a}</button>`).join('')}<div class="sp"></div><div class="tline"><div id="ql"></div></div><p id="qs">${sel!=null?B('ส่งคำตอบแล้ว ลุ้นที่จอใหญ่','Answer sent. Watch the big screen'):B('เลือกคำตอบภายใน '+v.dur+' วินาที','Choose your answer within '+v.dur+' seconds')}</p>`);
   const t0=v._t0||(v._t0=Date.now());qTimer=setInterval(()=>{const l=Math.max(0,1-(Date.now()-t0)/1000/v.dur);const e=$('ql');if(e)e.style.width=l*100+'%';if(!l)clearInterval(qTimer)},100);
-  V.querySelectorAll('.ans').forEach(b=>b.onclick=()=>{if(answers[v.qk]!=null)return;answers[v.qk]=+b.dataset.j;BUS.send({t:'ans',qk:v.qk,j:+b.dataset.j});buzz(15);b.classList.add('sel');V.querySelectorAll('.ans').forEach(x=>x.disabled=true);$('qs').textContent='ส่งคำตอบแล้ว ลุ้นที่จอใหญ่'});break}
+  V.querySelectorAll('.ans').forEach(b=>b.onclick=()=>{if(answers[v.qk]!=null)return;answers[v.qk]=+b.dataset.j;BUS.send({t:'ans',qk:v.qk,j:+b.dataset.j});buzz(15);b.classList.add('sel');V.querySelectorAll('.ans').forEach(x=>x.disabled=true);$('qs').innerHTML=B('ส่งคำตอบแล้ว ลุ้นที่จอใหญ่','Answer sent. Watch the big screen')});break}
  case 'reveal':{const a=answers[v.qk];
-  H(`<div class="k">STAGE 01 · INNOVATE</div>${chip()}<div class="sp"></div>${a==null?`<div class="res rv">ไม่ทันตอบ</div>`:`<p class="rv">คำตอบของคุณ</p><div class="big rv" style="--d:.1s">${'ABC'[a]}</div>`}<div class="sp"></div><p class="rv" style="--d:.3s">ดูเฉลยที่จอใหญ่</p><div class="sp"></div>`);break}
+  H(`<div class="k">STAGE 01 · INNOVATE</div>${chip()}<div class="sp"></div>${a==null?`<div class="res rv">${B('ไม่ทันตอบ','No answer in time')}</div>`:`<p class="rv">${B('คำตอบของคุณ','Your answer')}</p><div class="big rv" style="--d:.1s">${'ABC'[a]}</div>`}<div class="sp"></div><p class="rv" style="--d:.3s">${B('ดูเฉลยที่จอใหญ่','See the answer on the big screen')}</p><div class="sp"></div>`);break}
  case 'tap':tapView(v.label,v.msg,v.live,v.key,v.k);break;
- case 'fuelEnd':{const n=taps.fuel||0;H(`<div class="k">STAGE 02 COMPLETE</div>${chip()}<div class="sp"></div><div class="num rv">${n}</div><p class="rv">คุณแตะไป ${n} ครั้ง</p><div class="sp"></div><p class="rv" style="--d:.3s">ดูผลที่จอใหญ่</p><div class="sp"></div>`);break}
+ case 'fuelEnd':{const n=taps.fuel||0;H(`<div class="k">STAGE 02 COMPLETE</div>${chip()}<div class="sp"></div><div class="num rv">${n}</div><p class="rv">${B(`คุณแตะไป ${n} ครั้ง`,`You tapped ${n} times`)}</p><div class="sp"></div><p class="rv" style="--d:.3s">${B('ดูผลที่จอใหญ่','See the results on the big screen')}</p><div class="sp"></div>`);break}
  case 'roar':{const mine=v.team===my,R=`STAGE 03 · ROUND ${v.round+1}/2`;
-  if(mine&&v.phase==='go'&&!PM.on){taps['roar']=0;tapView('ตะโกน!','ไมค์ยังไม่เปิด ตะโกนพร้อมแตะรัวๆ แทน',true,'roar',R);V.insertAdjacentHTML('beforeend',micBtn());bindMic();break}
-  if(mine&&v.phase==='go'){H(`<div class="k">${R}</div>${chip()}<div class="sp"></div><div class="big rv" style="font-size:72px">🎤</div><h1 class="rv" style="--d:.1s"><b>ตะโกนเลย!</b><br>“ACCELERATE!”</h1><p class="rv" style="--d:.2s">ตะโกนใส่มือถือ ยิ่งดังยิ่งชาร์จเร็ว</p><div class="sp"></div><p>เสียงของคุณ</p><div class="mym"><div id="mym"></div></div>`);buzz([100,50,100]);break}
-  H(`<div class="k">${R}</div>${chip()}<div class="sp"></div><img src="${BADGE(v.team)}" alt="" class="rv" style="width:120px;margin:0 auto"><h1 class="rv" style="--d:.15s">ตาของ <b style="color:${T[v.team].c}">${T[v.team].name}</b></h1>${v.phase==='ready'?`<div class="num rv">${v.c}</div><p>${mine?'เตรียมตัว ลุกขึ้นยืน! อยู่เงียบๆ ก่อนนะ':'รอ MC ส่งสัญญาณ'}</p>`:`<p class="rv" style="--d:.25s">${mine?'':'ส่งเสียงเชียร์ได้'}</p>`}<div class="sp"></div>${mine&&!PM.on?micBtn():''}`);bindMic();if(mine&&v.phase==='ready')buzz(30);break}
- case 'rank':{H(`<div class="k">RESULTS</div>${chip()}<div class="sp"></div><h1 class="rv">ประกาศผล<b>ที่จอใหญ่</b></h1><p class="rv" style="--d:.2s">อย่าเพิ่งไป รอ MC ประกาศภารกิจสุดท้าย</p><div class="sp"></div>`);break}
+  if(mine&&v.phase==='go'&&!PM.on){taps['roar']=0;tapView(B('ตะโกน!','SHOUT!'),B('ไมค์ยังไม่เปิด ตะโกนพร้อมแตะรัวๆ แทน','Mic is off. Shout and tap fast instead'),true,'roar',R);V.insertAdjacentHTML('beforeend',micBtn());bindMic();break}
+  if(mine&&v.phase==='go'){H(`<div class="k">${R}</div>${chip()}<div class="sp"></div><div class="big rv" style="font-size:72px">🎤</div><h1 class="rv" style="--d:.1s"><b>${B('ตะโกนเลย!','Shout now!')}</b><br>“ACCELERATE!”</h1><p class="rv" style="--d:.2s">${B('ตะโกนใส่มือถือ ยิ่งดังยิ่งชาร์จเร็ว','Shout into your phone. Louder charges faster')}</p><div class="sp"></div><p>${B('เสียงของคุณ','Your voice')}</p><div class="mym"><div id="mym"></div></div>`);buzz([100,50,100]);break}
+  H(`<div class="k">${R}</div>${chip()}<div class="sp"></div><img src="${BADGE(v.team)}" alt="" class="rv" style="width:120px;margin:0 auto"><h1 class="rv" style="--d:.15s">${B(`ตาของ <b style="color:${T[v.team].c}">${T[v.team].name}</b>`,`<b style="color:${T[v.team].c}">${T[v.team].name}</b>’s turn`)}</h1>${v.phase==='ready'?`<div class="num rv">${v.c}</div><p>${mine?B('เตรียมตัว ลุกขึ้นยืน! อยู่เงียบๆ ก่อนนะ','Get ready, stand up! Stay quiet for now'):B('รอ MC ส่งสัญญาณ','Wait for the MC’s signal')}</p>`:`<p class="rv" style="--d:.25s">${mine?'':B('ส่งเสียงเชียร์ได้','Cheer them on!')}</p>`}<div class="sp"></div>${mine&&!PM.on?micBtn():''}`);bindMic();if(mine&&v.phase==='ready')buzz(30);break}
+ case 'rank':{H(`<div class="k">RESULTS</div>${chip()}<div class="sp"></div><h1 class="rv">${B('ประกาศผล<b>ที่จอใหญ่</b>','Results on the <b>big screen</b>')}</h1><p class="rv" style="--d:.2s">${B('อย่าเพิ่งไป รอ MC ประกาศภารกิจสุดท้าย','Don’t leave yet. The MC will announce the final mission')}</p><div class="sp"></div>`);break}
  case 'final':{tc('#ffb340');const crew=`<span class="chip rv" style="--c:#f4f7ff"><img src="${BADGE(0)}" alt=""><img src="${BADGE(1)}" alt="" style="margin-left:-16px"><img src="${BADGE(2)}" alt="" style="margin-left:-16px">ONE CREW · 150</span>`;
-  if(v.phase==='done'){app.classList.remove('tapping');H(`<div class="k">FINAL MISSION</div><div class="sp"></div><div class="num rv">${taps.final||0}</div><p class="rv">คุณแตะไป ${taps.final||0} ครั้ง</p><div class="sp"></div><p class="rv" style="--d:.3s">ดูจอใหญ่</p><div class="sp"></div><div class="k" style="color:#fff"><span style="color:var(--cyan)">INNOVATE</span> • EXECUTE • <span style="color:var(--orange)">ACCELERATE</span></div>`);buzz(60);break}
-  const msg=v.phase==='count'?'นับพร้อมกัน… '+v.c:v.phase==='go'?'แตะรัวๆ พร้อมกันทั้งห้อง!':'รอนับถอยหลังพร้อมกันทั้งห้อง';
-  tapView('พลัง!',msg,v.phase==='go','final','FINAL MISSION',crew);break}
+  if(v.phase==='done'){app.classList.remove('tapping');H(`<div class="k">FINAL MISSION</div><div class="sp"></div><div class="num rv">${taps.final||0}</div><p class="rv">${B(`คุณแตะไป ${taps.final||0} ครั้ง`,`You tapped ${taps.final||0} times`)}</p><div class="sp"></div><p class="rv" style="--d:.3s">${B('ดูจอใหญ่','Watch the big screen')}</p><div class="sp"></div><div class="k" style="color:#fff"><span style="color:var(--cyan)">INNOVATE</span> • EXECUTE • <span style="color:var(--orange)">ACCELERATE</span></div>`);buzz(60);break}
+  const msg=fmsg(v);
+  tapView(B('พลัง!','POWER!'),msg,v.phase==='go','final','FINAL MISSION',crew);break}
  }
 }
 
 BUS.on(m=>{
- if(m.t==='view'){if(!linked){linked=true;$('st').classList.add('on');$('stt').textContent='เชื่อมต่อแล้ว'}
+ if(m.t==='view'){if(!linked){linked=true;$('st').classList.add('on');$('stt').innerHTML=B('เชื่อมต่อแล้ว','Connected')}
   if(my!=null&&!cur)BUS.send({t:'join',team:my});
   const same=cur&&cur.v===m.view.v&&cur.v==='tap'&&cur.key===m.view.key;
-  if(same){cur=m.view;const o=$('orb');if(o)o.disabled=!m.view.live;const pm=$('pm');if(pm)pm.textContent=m.view.msg;return}
-  if(cur&&cur.v==='final'&&m.view.v==='final'&&m.view.phase!=='done'&&$('orb')){cur=m.view;$('orb').disabled=m.view.phase!=='go';$('pm').textContent=m.view.phase==='count'?'นับพร้อมกัน… '+m.view.c:m.view.phase==='go'?'แตะรัวๆ พร้อมกันทั้งห้อง!':'รอนับถอยหลังพร้อมกันทั้งห้อง';return}
+  if(same){cur=m.view;const o=$('orb');if(o)o.disabled=!m.view.live;const pm=$('pm');if(pm)pm.innerHTML=m.view.msg;return}
+  if(cur&&cur.v==='final'&&m.view.v==='final'&&m.view.phase!=='done'&&$('orb')){cur=m.view;$('orb').disabled=m.view.phase!=='go';$('pm').innerHTML=fmsg(m.view);return}
   if(m.view.v==='quiz'&&cur&&cur.v==='quiz'&&cur.qk===m.view.qk)return;
   render(m.view)}
  else if(m.t==='reset'){my=null;answers={};taps={};cur=null;picker()}
@@ -206,8 +220,8 @@ BUS.on(m=>{
 picker();
 BUS.send({t:'hello'});
 const hi=setInterval(()=>{if(linked){clearInterval(hi);return}BUS.send({t:'hello'})},1500);
-setTimeout(()=>{if(linked)return;$('stt').textContent='ยังไม่พบจอ LED';
- V.insertAdjacentHTML('beforeend',`<div class="help">ยังไม่พบจอ LED รอสักครู่ หรือแจ้งทีมงานหน้าเวที</div>`)},4000);
+setTimeout(()=>{if(linked)return;$('stt').innerHTML=B('ยังไม่พบจอ LED','LED not found yet');
+ V.insertAdjacentHTML('beforeend',`<div class="help">${B('ยังไม่พบจอ LED รอสักครู่ หรือแจ้งทีมงานหน้าเวที','Can’t find the LED screen yet. Please wait a moment or tell the stage crew.')}</div>`)},4000);
 </script>
 </body>
 </html>

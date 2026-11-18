@@ -181,20 +181,23 @@ body{display:grid;place-items:center}
 .led.shake .cam,.led.shake .stage{animation:shk .1s infinite}
 @keyframes shk{0%{transform:translate(0,0)}25%{transform:translate(.15cqw,-.1cqw)}50%{transform:translate(-.12cqw,.12cqw)}75%{transform:translate(.1cqw,.1cqw)}}
 
-/* operator bar (auto-hides) */
-.ops{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:50;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;max-width:calc(100vw - 24px);padding:8px;border-radius:14px;background:#0a0f1ccc;backdrop-filter:blur(14px);border:1px solid #ffffff1f;font:500 12px/1 var(--mono);transition:opacity .5s,transform .5s}
-.ops.hide{opacity:0;transform:translate(-50%,12px);pointer-events:none}
+/* operator bar: hidden by default. Shows only when the mouse goes to the bottom edge, or with key H. Keyboard shortcuts work while it is hidden. */
+.ops{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:50;display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:4px;max-width:calc(100vw - 16px);overflow-x:auto;scrollbar-width:none;padding:4px;border-radius:10px;background:#0a0f1ccc;backdrop-filter:blur(14px);border:1px solid #ffffff1f;font:500 10px/1 var(--mono);transition:opacity .35s,transform .35s}
+html[data-l=en] body [lang=th],html:not([data-l=en]) body [lang=en]{display:none!important}
+.ops #lang b{color:var(--orange)}
+.ops.hide{opacity:0;transform:translate(-50%,calc(100% + 12px));pointer-events:none}
 .pills{display:flex;gap:4px;flex-wrap:wrap}
-.pill{padding:7px 9px;border-radius:8px;color:#8796b8;letter-spacing:.08em}
+.pill{padding:4px 6px;border-radius:6px;white-space:nowrap;color:#8796b8;letter-spacing:.08em}
 .pill.on{background:var(--orange);color:#1a0a00}
 .pill.done{color:#dfe8ff}
-.ops button,.ops a{font:600 13px/1 var(--mono);padding:10px 14px;border-radius:9px;border:1px solid #ffffff26;background:transparent;color:#eef3ff;cursor:pointer;text-decoration:none;touch-action:manipulation}
+.ops button,.ops a{font:600 11px/1 var(--mono);padding:6px 9px;border-radius:7px;white-space:nowrap;flex:none;border:1px solid #ffffff26;background:transparent;color:#eef3ff;cursor:pointer;text-decoration:none;touch-action:manipulation}
 .ops #next{background:var(--orange);border-color:var(--orange);color:#1a0a00}
 .ops #next:disabled{opacity:.35;cursor:not-allowed}
 .ops #next.pulse{animation:pl 1.4s ease-in-out infinite}
 @keyframes pl{50%{box-shadow:0 0 0 6px #ff7a1a40}}
 .ops button:focus-visible,.ops a:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-.players{color:#8796b8;padding:0 6px}
+.players{color:#8796b8;padding:0 4px;white-space:nowrap}
+.pills{flex-wrap:nowrap}
 @media (prefers-reduced-motion:reduce){.bg,.card.on .cbg,.grain,.rk .fl,.podium img.rk1{animation:none}.led.shake .cam,.led.shake .stage{animation:none}}
 </style>
 </head>
@@ -220,13 +223,14 @@ body{display:grid;place-items:center}
 
 <div class="ops" id="ops">
   <div class="pills" id="pills"></div>
-  <span class="players" id="pc">มือถือ 0</span>
-  <button id="restart" type="button" title="R">↺ เริ่มใหม่</button>
-  <button id="mic" type="button" title="ปรับความไว: [ และ ]">🎤 เปิดไมค์</button>
-  <button id="sim" type="button" title="S">ผู้เล่นจำลอง: เปิด</button>
-  <button id="fs" type="button" title="F">⛶ เต็มจอ</button>
-  <a id="mob" href="mobile.html" target="_blank" rel="noopener">เปิดหน้ามือถือ ↗</a>
-  <button id="next" type="button" title="→ / Space">ถัดไป ▶</button>
+  <span class="players" id="pc"></span>
+  <button id="lang" type="button" title="L">🌐 <b>TH</b> / EN</button>
+  <button id="restart" type="button" title="R">↺ <span lang="th">เริ่มใหม่</span><span lang="en">Restart</span></button>
+  <button id="mic" type="button" title="[ ]">🎤 <span lang="th">เปิดไมค์</span><span lang="en">Mic on</span></button>
+  <button id="sim" type="button" title="S"></button>
+  <button id="fs" type="button" title="F">⛶ <span lang="th">เต็มจอ</span><span lang="en">Fullscreen</span></button>
+  <a id="mob" href="mobile.html" target="_blank" rel="noopener"><span lang="th">เปิดหน้ามือถือ</span><span lang="en">Open phone page</span> ↗</a>
+  <button id="next" type="button" title="→ / Space">▶</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
@@ -254,14 +258,20 @@ const BUS=(()=>{const id='led-'+Math.random().toString(36).slice(2,8),seen=new S
  const NET=RT('led',id,deliver);
  return{id,net:NET,send(m){m.from=id;m.mid=id+Math.random().toString(36).slice(2,9);if(bc)bc.postMessage(m);NET.send(m);if(parent!==window)try{parent.postMessage({__rk:m},'*')}catch(e){}},on(h){hs.push(h)}}})();
 
+/* language: TH / EN. Every text is written in both languages (<span lang=th>/<span lang=en>), CSS shows one, so switching is instant mid-game.
+   INNOVATE / EXECUTE / ACCELERATE stay in English in both languages. */
+const B=(th,en)=>`<span lang="th">${th}</span><span lang="en">${en}</span>`;
+let LANG=(()=>{const q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='th')return q;try{return localStorage.getItem('rk-led-lang')||'th'}catch(e){return 'th'}})();
+function setLang(l){LANG=l;document.documentElement.dataset.l=l;document.documentElement.lang=l;try{localStorage.setItem('rk-led-lang',l)}catch(e){}const b=document.getElementById('lang');if(b)b.innerHTML=l==='en'?'🌐 TH / <b>EN</b>':'🌐 <b>TH</b> / EN'}
+setLang(LANG);
 const A='assets/';
 const T=[{k:'innovate',name:'INNOVATE',th:'ทีมฟ้า',c:'#4fd8ff'},{k:'execute',name:'EXECUTE',th:'ทีมขาว',c:'#f4f7ff'},{k:'accelerate',name:'ACCELERATE',th:'ทีมส้ม',c:'#ff7a1a'}];
 const BADGE=i=>A+'badge_'+T[i].k+'.webp', ROCKET=i=>A+'rocket_'+T[i].k+'.webp';
-const STEPS=['ขึ้นยาน','01','02','03','ผล','Mission'];
+const STEPS=[B('ขึ้นยาน','Boarding'),'01','02','03',B('ผล','Results'),'Mission'];
 const SCN=['SCN 00 / BOARDING','SCN 01 / INNOVATE','SCN 02 / EXECUTE','SCN 03 / ACCELERATE','SCN 04 / RESULTS','SCN 05 / ONE MISSION'];
 const QS=[
- {q:'AI digital assistant ของ GSK มีชื่อว่าอะไร?',a:['GiBi','GiGi','GiAI'],r:1},
- {q:'Tagline ของ GSK Kickoff 2027 คืออะไร?',a:['Explore • Discover • Win','Plan • Build • Launch','Innovate • Execute • Accelerate'],r:2}
+ {q:B('AI digital assistant ของ GSK มีชื่อว่าอะไร?','What is the name of GSK’s AI digital assistant?'),a:['GiBi','GiGi','GiAI'],r:1},
+ {q:B('Tagline ของ GSK Kickoff 2027 คืออะไร?','What is the GSK Kickoff 2027 tagline?'),a:['Explore • Discover • Win','Plan • Build • Launch','Innovate • Execute • Accelerate'],r:2}
 ];
 const $=id=>document.getElementById(id);
 const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -269,13 +279,13 @@ const led=$('led');
 let S,timers=[],players={},view={v:'board'},onTap=null,onLvl=null;
 /* SIM: add 149 simulated players. Auto-off when the first real phone joins, unless the operator turns it back on. */
 let SIM=/[?&]sim=1/.test(location.search),simManual=SIM;
-function simUI(){const b=document.getElementById('sim');if(b)b.textContent='ผู้เล่นจำลอง: '+(SIM?'เปิด':'ปิด')}
+function simUI(){const b=document.getElementById('sim');if(b)b.innerHTML=B('ผู้เล่นจำลอง: '+(SIM?'เปิด':'ปิด'),'Simulated players: '+(SIM?'ON':'OFF'))}
 function later(f,ms){timers.push(setTimeout(f,ms))}
 function every(f,ms){const h=setInterval(f,ms);timers.push(h);return h}
 function clearAll(){timers.forEach(h=>{clearTimeout(h);clearInterval(h)});timers=[];onTap=null;onLvl=null}
 function reset(){S={scene:0,score:[[0,0,0],[0,0,0],[0,0,0]],quiz:null};players={};if(!simManual)SIM=false;simUI();BUS.send({t:'reset'});pc()}
 const team=i=>Object.values(players).filter(p=>p.team===i);
-function pc(){$('pc').textContent='มือถือ '+Object.keys(players).length}
+function pc(){$('pc').innerHTML=B('มือถือ ','Phones ')+Object.keys(players).length}
 
 /* phone link + messages */
 const mobURL=(()=>{const u=new URL('mobile.html',location.href);const r=new URLSearchParams(location.search).get('room');if(r)u.search='?room='+encodeURIComponent(r);return u.href})();$('mob').href=mobURL;
@@ -323,7 +333,7 @@ function buildLanes(){$('lanes').innerHTML=T.map((t,i)=>`<div class="lane"><div 
 const total=i=>S.score[i].reduce((a,b)=>a+b,0);
 function moveRockets(){T.forEach((t,i)=>{const v=total(i);$('rk'+i).style.bottom=(7+v/300*46)+'%';$('sc'+i).textContent=Math.round(v)})}
 function pills(){$('pills').innerHTML=STEPS.map((s,i)=>`<span class="pill ${i===S.scene?'on':i<S.scene?'done':''}">${s}</span>`).join('')}
-function setNext(on,label){const b=$('next');b.disabled=!on;b.textContent=label||'ถัดไป ▶';b.classList.toggle('pulse',!!on);if(on)wake()}
+function setNext(on,label){const b=$('next');b.disabled=!on;b.innerHTML=label||B('ถัดไป','Next')+' ▶';b.classList.toggle('pulse',!!on);}
 const main=h=>$('main').innerHTML=h, hudT=t=>$('hudT').textContent=t;
 const prows=(vals,fmt)=>`<div class="pcts">${T.map((t,i)=>`<div class="prow rv" style="--d:${.15*i}s;color:${t.c}"><img src="${BADGE(i)}" alt=""><span>${t.name}</span><div class="tk"><div data-w="${vals[i]}" style="background:${t.c}"></div></div><b>${fmt(i)}</b></div>`).join('')}</div>`;
 const growBars=()=>later(()=>document.querySelectorAll('[data-w]').forEach(d=>d.style.width=d.dataset.w+'%'),80);
@@ -343,110 +353,110 @@ const MIC={on:false,an:null,buf:null,cal:100,busy:false,
    this.an=an;this.buf=new Float32Array(an.fftSize);this.on=true}catch(e){this.on=false;this.err=1}
   this.busy=false;micUI()},
  db(){if(!this.on)return 0;this.an.getFloatTimeDomainData(this.buf);let s=0;for(const x of this.buf)s+=x*x;return 20*Math.log10(Math.sqrt(s/this.buf.length)+1e-9)+this.cal}};
-function micUI(){const b=document.getElementById('mic');if(!b)return;b.textContent=MIC.on?'🎤 '+Math.round(Math.max(0,MIC.db()))+' dB':(MIC.err?'🎤 ไมค์ใช้ไม่ได้':'🎤 เปิดไมค์')}
+function micUI(){const b=document.getElementById('mic');if(!b)return;b.innerHTML=MIC.on?'🎤 '+Math.round(Math.max(0,MIC.db()))+' dB':(MIC.err?'🎤 '+B('ไมค์ใช้ไม่ได้','Mic unavailable'):'🎤 '+B('เปิดไมค์','Mic on'))}
 setInterval(()=>{if(MIC.on)micUI()},250);
 
 const SC=[
 /* 0 boarding */
 ()=>{setBg('boarding_bg.jpg');look({shade:1,full:1});buildLanes();moveRockets();
- main(`<div class="kicker rv">Pre-launch · Mission control</div><h2 class="rv" style="--d:.15s">สแกนเพื่อ<b>ขึ้นยาน</b></h2><p class="rv" style="--d:.3s">MC จะประกาศว่าแต่ละโซนอยู่ทีมไหน แล้วเลือกทีมในมือถือ</p><div class="qrrow rv" style="--d:.45s"><div class="qr" id="qr"></div><div class="counts">${T.map((t,i)=>`<div><img src="${BADGE(i)}" alt=""><div><b style="color:${t.c}" id="jc${i}">0</b><span> / 50</span><small style="color:${t.c}">${t.name}</small></div></div>`).join('')}</div></div>`);
+ main(`<div class="kicker rv">Pre-launch · Mission control</div><h2 class="rv" style="--d:.15s">${B('สแกนเพื่อ<b>ขึ้นยาน</b>','Scan to <b>board</b>')}</h2><p class="rv" style="--d:.3s">${B('MC จะประกาศว่าแต่ละโซนอยู่ทีมไหน แล้วเลือกทีมในมือถือ','The MC will announce each zone’s team. Then pick your team on your phone.')}</p><div class="qrrow rv" style="--d:.45s"><div class="qr" id="qr"></div><div class="counts">${T.map((t,i)=>`<div><img src="${BADGE(i)}" alt=""><div><b style="color:${t.c}" id="jc${i}">0</b><span> / 50</span><small style="color:${t.c}">${t.name}</small></div></div>`).join('')}</div></div>`);
  drawQR();const bots=[0,0,0];
  every(()=>{T.forEach((t,i)=>{if(bots[i]<49&&Math.random()<.7)bots[i]=Math.min(49,bots[i]+(Math.random()<.5?1:2));$('jc'+i).textContent=(SIM?bots[i]:0)+team(i).length})},160);
- P({v:'board'});cap('สแกน QR แล้วเลือก<em>ทีม</em>ตามที่ MC ประกาศ');
- setNext(true,'เริ่มภารกิจ ▶')},
+ P({v:'board'});cap(B('สแกน QR แล้วเลือก<em>ทีม</em>ตามที่ MC ประกาศ','Scan the QR and pick the <em>team</em> the MC announces'));
+ setNext(true,B('เริ่มภารกิจ','Start mission')+' ▶')},
 /* 1 quiz */
 ()=>{const pc=[[],[]];
- P({v:'wait',k:'STAGE 01 · INNOVATE',h:'มองจอใหญ่',p:'คำถามกำลังจะมา'});
+ P({v:'wait',k:'STAGE 01 · INNOVATE',h:B('มองจอใหญ่','Watch the big screen'),p:B('คำถามกำลังจะมา','The question is coming')});
  const ask=(k,done)=>{const Q=QS[k];S.quiz=k;setBg('led_bg_master.jpg');look({shade:1,dof:1});buildLanes();moveRockets();
-  main(`<div class="kicker rv">Stage 01 · Innovate · ${k+1}/${QS.length}</div><h2 class="rv" style="--d:.15s">${Q.q}</h2><div class="choices rv" style="--d:.35s">${Q.a.map((a,j)=>`<div class="ch" id="c${j}"><i>${'ABC'[j]}</i><span>${a}</span><em>✓ CORRECT</em></div>`).join('')}</div><div class="tbar rv" style="--d:.5s"><div id="tb"></div></div><div class="meta" id="cnt">ตอบแล้ว 0 / 150</div>`);
-  P({v:'quiz',k:'STAGE 01 · INNOVATE · Q'+(k+1)+'/'+QS.length,q:Q.q,a:Q.a,qk:k,dur:15});cap('ตอบในมือถือภายใน <em>15 วินาที</em>',T[0].c);
+  main(`<div class="kicker rv">Stage 01 · Innovate · ${k+1}/${QS.length}</div><h2 class="rv" style="--d:.15s">${Q.q}</h2><div class="choices rv" style="--d:.35s">${Q.a.map((a,j)=>`<div class="ch" id="c${j}"><i>${'ABC'[j]}</i><span>${a}</span><em>✓ CORRECT</em></div>`).join('')}</div><div class="tbar rv" style="--d:.5s"><div id="tb"></div></div><div class="meta" id="cnt">${B('ตอบแล้ว','Answered')} 0 / 150</div>`);
+  P({v:'quiz',k:'STAGE 01 · INNOVATE · Q'+(k+1)+'/'+QS.length,q:Q.q,a:Q.a,qk:k,dur:15});cap(B('ตอบในมือถือภายใน <em>15 วินาที</em>','Answer on your phone within <em>15 seconds</em>'),T[0].c);
   hudT('00:15');const t0=Date.now();
   const h=every(()=>{const e=(Date.now()-t0)/1000,left=Math.max(0,15-e);$('tb').style.width=(left/15*100)+'%';hudT('00:'+String(Math.ceil(left)).padStart(2,'0'));
    const real=Object.values(players),ra=real.filter(p=>p.ans[k]!=null).length;
-   const n=SIM?Math.min(150-real.length,Math.round((150-real.length)*(1-Math.exp(-e/4)))):0;$('cnt').textContent='ตอบแล้ว '+(n+ra)+' / '+(SIM?150:real.length);
+   const n=SIM?Math.min(150-real.length,Math.round((150-real.length)*(1-Math.exp(-e/4)))):0;$('cnt').innerHTML=B('ตอบแล้ว','Answered')+' '+(n+ra)+' / '+(SIM?150:real.length);
    if(left<=0){clearInterval(h);reveal()}},100);
   const reveal=()=>{S.quiz=null;hudT('');Q.a.forEach((a,j)=>$('c'+j).classList.add(j===Q.r?'right':'dim'));fx1('flare',1800);
    const p=T.map((t,i)=>{const tp0=team(i);if(!SIM)return tp0.length?Math.round(tp0.filter(x=>x.ans[k]===Q.r).length/tp0.length*100):0;let v=rnd(58,84);const tp=team(i);if(tp.length){const c=tp.filter(x=>x.ans[k]===Q.r).length/tp.length,none=tp.filter(x=>x.ans[k]==null).length/tp.length;v+=10*c-14*none-8*(1-c-none)}return Math.max(20,Math.min(98,Math.round(v)))});pc[k]=p;
    $('tb').parentNode.remove();$('cnt').remove();$('main').insertAdjacentHTML('beforeend',prows(p,i=>p[i]+'%',1));growBars();
-   P({v:'reveal',qk:k,r:Q.r,letter:'ABC'[Q.r],ans:Q.a[Q.r],pct:p});cap(`คำตอบคือ <em>${Q.a[Q.r]}</em>`,'var(--good)');
+   P({v:'reveal',qk:k,r:Q.r,letter:'ABC'[Q.r],ans:Q.a[Q.r],pct:p});cap(B(`คำตอบคือ <em>${Q.a[Q.r]}</em>`,`The answer is <em>${Q.a[Q.r]}</em>`),'var(--good)');
    later(done,6500)}};
- card('stage01_innovate_bg.jpg','STAGE 01','INNOVATE',T[0].c,'ตอบให้ถูก<em>ทั้งทีม</em> คะแนนคือ % ลูกเรือที่ตอบถูก',5000,()=>
- ask(0,()=>ask(1,()=>{T.forEach((t,i)=>S.score[i][0]=Math.round((pc[0][i]+pc[1][i])/2));moveRockets();cap('จรวดไต่ขึ้นตาม<em>คะแนน</em>');
-  main(`<div class="kicker rv">Stage 01 complete</div><h2 class="rv" style="--d:.15s">คะแนนด่าน <b>Innovate</b></h2>${prows(S.score.map(s=>s[0]),i=>S.score[i][0],1)}`);growBars();
-  P({v:'wait',k:'STAGE 01 COMPLETE',h:'เตรียมนิ้วให้พร้อม',p:'ด่านต่อไปต้องแตะรัวๆ'});setNext(true)})))},
+ card('stage01_innovate_bg.jpg','STAGE 01','INNOVATE',T[0].c,B('ตอบให้ถูก<em>ทั้งทีม</em> คะแนนคือ % ลูกเรือที่ตอบถูก','Answer right <em>as a team</em>. Score = % of crew who answer correctly'),5000,()=>
+ ask(0,()=>ask(1,()=>{T.forEach((t,i)=>S.score[i][0]=Math.round((pc[0][i]+pc[1][i])/2));moveRockets();cap(B('จรวดไต่ขึ้นตาม<em>คะแนน</em>','Rockets climb with the <em>score</em>'));
+  main(`<div class="kicker rv">Stage 01 complete</div><h2 class="rv" style="--d:.15s">${B('คะแนนด่าน <b>INNOVATE</b>','<b>INNOVATE</b> stage score')}</h2>${prows(S.score.map(s=>s[0]),i=>S.score[i][0],1)}`);growBars();
+  P({v:'wait',k:'STAGE 01 COMPLETE',h:B('เตรียมนิ้วให้พร้อม','Get your fingers ready'),p:B('ด่านต่อไปต้องแตะรัวๆ','Next stage: tap as fast as you can')});setNext(true)})))},
 /* 2 fuel */
 ()=>{let run=false;const bot=[0,0,0],rate=T.map(()=>rnd(5.2,6.8)),avg=[0,0,0];const DUR=20;
- P({v:'wait',k:'STAGE 02 · EXECUTE',h:'มองจอใหญ่',p:'ด่านเติมเชื้อเพลิงกำลังจะเริ่ม'});
+ P({v:'wait',k:'STAGE 02 · EXECUTE',h:B('มองจอใหญ่','Watch the big screen'),p:B('ด่านเติมเชื้อเพลิงกำลังจะเริ่ม','The fuel-up stage is about to start')});
  onTap=p=>{if(run)p.taps++};
- card('stage02_execute_bg.jpg','STAGE 02','EXECUTE',T[1].c,'แตะมือถือ<em>รัวๆ</em> พร้อมกันทั้งทีม เติมเชื้อเพลิงให้เต็มถัง',5000,()=>{
+ card('stage02_execute_bg.jpg','STAGE 02','EXECUTE',T[1].c,B('แตะมือถือ<em>รัวๆ</em> พร้อมกันทั้งทีม เติมเชื้อเพลิงให้เต็มถัง','<em>Tap fast</em> together as a team to fill the fuel tank'),5000,()=>{
  setBg('stage02_execute_bg.jpg');look({shade:1,dof:1});buildLanes();moveRockets();
- main(`<div class="kicker rv">Stage 02 · Execute · Fuel up</div><h2 class="rv" style="--d:.15s" id="fh">เตรียมตัว…</h2><div class="tanks rv" style="--d:.3s">${T.map((t,i)=>`<div class="tank"><div class="liq" id="tk${i}" style="background:linear-gradient(0deg,${t.c},${t.c}99);color:${t.c}"></div><img src="${A}fuel_tank.webp" alt=""><span id="tv${i}">0</span></div>`).join('')}</div><div class="tname">${T.map(t=>`<span style="color:${t.c}">${t.name}</span>`).join('')}</div><div class="meta">ตัวเลข = จำนวนแตะเฉลี่ยต่อคน</div>`);
- const tv=(msg,live)=>P({v:'tap',key:'fuel',k:'STAGE 02 · EXECUTE',label:'แตะ!',msg,live});
- let c=3;hudT('03');$('fh').textContent='เตรียมตัว… 3';tv('3…',false);cap('<em>3</em>','#fff');
- const cd=every(()=>{c--;if(c>0){hudT('0'+c);$('fh').textContent='เตรียมตัว… '+c;tv(c+'…',false);cap('<em>'+c+'</em>','#fff');return}
-  clearInterval(cd);run=true;tv('แตะรัวๆ!',true);$('fh').innerHTML='แตะรัวๆ <b>เติมเชื้อเพลิง!</b>';cap('<em>GO!</em> แตะรัวๆ','var(--orange)');targetSpeed=1.2;const t0=Date.now();
+ main(`<div class="kicker rv">Stage 02 · Execute · Fuel up</div><h2 class="rv" style="--d:.15s" id="fh">${B('เตรียมตัว…','Get ready…')}</h2><div class="tanks rv" style="--d:.3s">${T.map((t,i)=>`<div class="tank"><div class="liq" id="tk${i}" style="background:linear-gradient(0deg,${t.c},${t.c}99);color:${t.c}"></div><img src="${A}fuel_tank.webp" alt=""><span id="tv${i}">0</span></div>`).join('')}</div><div class="tname">${T.map(t=>`<span style="color:${t.c}">${t.name}</span>`).join('')}</div><div class="meta">${B('ตัวเลข = จำนวนแตะเฉลี่ยต่อคน','Number = average taps per person')}</div>`);
+ const tv=(msg,live)=>P({v:'tap',key:'fuel',k:'STAGE 02 · EXECUTE',label:B('แตะ!','TAP!'),msg,live});
+ let c=3;hudT('03');$('fh').innerHTML=B('เตรียมตัว…','Get ready…')+' 3';tv('3…',false);cap('<em>3</em>','#fff');
+ const cd=every(()=>{c--;if(c>0){hudT('0'+c);$('fh').innerHTML=B('เตรียมตัว…','Get ready…')+' '+c;tv(c+'…',false);cap('<em>'+c+'</em>','#fff');return}
+  clearInterval(cd);run=true;tv(B('แตะรัวๆ!','Tap fast!'),true);$('fh').innerHTML=B('แตะรัวๆ <b>เติมเชื้อเพลิง!</b>','Tap fast to <b>fuel up!</b>');cap('<em>GO!</em> '+B('แตะรัวๆ','Tap fast'),'var(--orange)');targetSpeed=1.2;const t0=Date.now();
   const h=every(()=>{const e=(Date.now()-t0)/1000;hudT('00:'+String(Math.max(0,Math.ceil(DUR-e))).padStart(2,'0'));
    T.forEach((t,i)=>{bot[i]=rate[i]*e;const tp=team(i),ra=tp.length?tp.reduce((a,p)=>a+p.taps,0)/tp.length:0;avg[i]=!SIM?ra:tp.length?bot[i]*.5+ra*.5:bot[i];$('tk'+i).style.height=Math.min(51,avg[i]/(7*DUR)*51)+'%';$('tv'+i).textContent=Math.round(avg[i])});
    if(e>=DUR){clearInterval(h);run=false;targetSpeed=.3;const mx=Math.max(...avg)||1;T.forEach((t,i)=>S.score[i][1]=Math.round(avg[i]/mx*100));moveRockets();hudT('');
-    $('fh').innerHTML='<b>หมดเวลา!</b>';cap(T.map((t,i)=>`<em style="color:${t.c}">${t.name}</em> ${S.score[i][1]}`).join(' · '));
+    $('fh').innerHTML='<b>'+B('หมดเวลา!','Time’s up!')+'</b>';cap(T.map((t,i)=>`<em style="color:${t.c}">${t.name}</em> ${S.score[i][1]}`).join(' · '));
     P({v:'fuelEnd',scores:S.score.map(s=>s[1])});setNext(true)}},100)},1000)})},
 /* 3 roar = "voice charge": 2 rounds x 3 teams, 3-s get-ready (ambient noise is measured then), 6-s charge.
    Every phone in the team listens with its own mic and sends its loudness above its own ambient level (0..1).
    The LED averages the team's phones each tick and adds it to the team's charge bar; louder + longer = more charge.
    Fallbacks: the stage mic on this computer, then taps, then simulated players. Team score = better round (0-100%). */
 ()=>{const pk=[[0,0,0],[0,0,0]],best=i=>Math.max(pk[0][i],pk[1][i]);let turn=0;const TURN=6,K=24;
- P({v:'wait',k:'STAGE 03 · ACCELERATE',h:'เตรียมเปิดไมค์',p:'ทีละทีม 2 รอบ ตะโกนใส่มือถือให้ดังที่สุด'});
+ P({v:'wait',k:'STAGE 03 · ACCELERATE',h:B('เตรียมเปิดไมค์','Get your mic ready'),p:B('ทีละทีม 2 รอบ ตะโกนใส่มือถือให้ดังที่สุด','One team at a time, 2 rounds. Shout into your phone as loud as you can')});
  const peaksRow=()=>`<div class="peaks"><span style="color:var(--dim)">R1 / R2</span>${T.map((t,j)=>`<span style="color:${t.c}">${t.name} ${pk[0][j]?pk[0][j]+'%':'—'} / ${pk[1][j]?pk[1][j]+'%':'—'}</span>`).join('')}</div>`;
- const shell=(i,r)=>{main(`<div class="kicker rv">Stage 03 · Accelerate · Round ${r+1}/2</div><h2 class="rv" style="--d:.15s" id="rh"><b style="color:${T[i].c}">${T[i].name}</b> เตรียมตัว…</h2><div class="meter rv" style="--d:.3s"><div class="fill" id="mt" style="background:linear-gradient(90deg,${T[i].c}88,${T[i].c});color:${T[i].c};transition:width .12s linear"></div><img src="${A}sound_meter.webp" alt=""></div><div style="display:flex;align-items:baseline;gap:2cqw"><div class="db" id="db">0%</div><div class="meta" id="src">พลังเสียงที่ชาร์จ</div></div><div class="vu" id="vu">${'<i></i>'.repeat(20)}</div>${peaksRow()}`)};
+ const shell=(i,r)=>{main(`<div class="kicker rv">Stage 03 · Accelerate · Round ${r+1}/2</div><h2 class="rv" style="--d:.15s" id="rh"><b style="color:${T[i].c}">${T[i].name}</b> ${B('เตรียมตัว…','get ready…')}</h2><div class="meter rv" style="--d:.3s"><div class="fill" id="mt" style="background:linear-gradient(90deg,${T[i].c}88,${T[i].c});color:${T[i].c};transition:width .12s linear"></div><img src="${A}sound_meter.webp" alt=""></div><div style="display:flex;align-items:baseline;gap:2cqw"><div class="db" id="db">0%</div><div class="meta" id="src">${B('พลังเสียงที่ชาร์จ','Voice power charged')}</div></div><div class="vu" id="vu">${'<i></i>'.repeat(20)}</div>${peaksRow()}`)};
  const finish=()=>{T.forEach((t,i)=>S.score[i][2]=best(i));moveRockets();hudT('');cap('');
-  main(`<div class="kicker rv">Stage 03 complete</div><h2 class="rv" style="--d:.15s">พลังเสียงของ<b>แต่ละทีม</b></h2>${prows(S.score.map(s=>s[2]),i=>best(i)+'%',1)}<div class="meta">คะแนนใช้รอบที่ชาร์จได้มากกว่าของแต่ละทีม</div>`);growBars();
-  P({v:'wait',k:'STAGE 03 COMPLETE',h:'ครบ 3 ด่านแล้ว',p:'รอ MC ประกาศผล'});setNext(true,'ประกาศผล ▶')};
+  main(`<div class="kicker rv">Stage 03 complete</div><h2 class="rv" style="--d:.15s">${B('พลังเสียงของ<b>แต่ละทีม</b>','Voice power of <b>each team</b>')}</h2>${prows(S.score.map(s=>s[2]),i=>best(i)+'%',1)}<div class="meta">${B('คะแนนใช้รอบที่ชาร์จได้มากกว่าของแต่ละทีม','Each team scores its better round')}</div>`);growBars();
+  P({v:'wait',k:'STAGE 03 COMPLETE',h:B('ครบ 3 ด่านแล้ว','All 3 stages done'),p:B('รอ MC ประกาศผล','Wait for the MC to announce the results')});setNext(true,B('ประกาศผล','Results')+' ▶')};
  const one=()=>{led.classList.remove('shake');
   if(turn>5){finish();return}
   const r=Math.floor(turn/3),i=turn%3;
-  if(turn===3&&!one.r2){one.r2=1;hudT('');main(`<div class="kicker rv">Stage 03 · Accelerate</div><h2 class="rv" style="--d:.15s">รอบที่ <b>2</b></h2><p class="rv" style="--d:.3s">โอกาสสุดท้าย ใช้รอบที่ชาร์จได้มากกว่าเป็นคะแนน</p>${peaksRow()}`);cap('<em>ROUND 2</em> เตรียมตัว!');fx1('flare',1800);
-   P({v:'wait',k:'STAGE 03 · ROUND 2',h:'รอบที่ 2',p:'เตรียมตัว ทีละทีมเหมือนรอบแรก'});later(one,4000);return}
-  shell(i,r);let c=3;const amb=[];hudT('03');cap(`ตาของ <em>${T[i].name}</em> เตรียมตัว… 3`,T[i].c);P({v:'roar',team:i,round:r,phase:'ready',c});
+  if(turn===3&&!one.r2){one.r2=1;hudT('');main(`<div class="kicker rv">Stage 03 · Accelerate</div><h2 class="rv" style="--d:.15s">${B('รอบที่ <b>2</b>','Round <b>2</b>')}</h2><p class="rv" style="--d:.3s">${B('โอกาสสุดท้าย ใช้รอบที่ชาร์จได้มากกว่าเป็นคะแนน','Last chance. Your better round counts')}</p>${peaksRow()}`);cap('<em>ROUND 2</em> '+B('เตรียมตัว!','Get ready!'));fx1('flare',1800);
+   P({v:'wait',k:'STAGE 03 · ROUND 2',h:B('รอบที่ 2','Round 2'),p:B('เตรียมตัว ทีละทีมเหมือนรอบแรก','Get ready, one team at a time like round 1')});later(one,4000);return}
+  shell(i,r);let c=3;const amb=[];hudT('03');cap(B(`ตาของ <em>${T[i].name}</em> เตรียมตัว… 3`,`<em>${T[i].name}</em>’s turn. Get ready… 3`),T[i].c);P({v:'roar',team:i,round:r,phase:'ready',c});
   const sa=every(()=>{if(MIC.on)amb.push(MIC.db())},100);
-  const cd=every(()=>{c--;if(c>0){hudT('0'+c);cap(`ตาของ <em>${T[i].name}</em> เตรียมตัว… ${c}`,T[i].c);P({v:'roar',team:i,round:r,phase:'ready',c});return}
+  const cd=every(()=>{c--;if(c>0){hudT('0'+c);cap(B(`ตาของ <em>${T[i].name}</em> เตรียมตัว… ${c}`,`<em>${T[i].name}</em>’s turn. Get ready… ${c}`),T[i].c);P({v:'roar',team:i,round:r,phase:'ready',c});return}
    clearInterval(cd);clearInterval(sa);amb.sort((a,b)=>a-b);go1(i,r,amb.length?amb[Math.floor(amb.length/2)]:0)},1000)};
  const go1=(i,r,ledBase)=>{let charge=0,last=Date.now();const lv={};
   onTap=p=>{if(p.team===i)charge=Math.min(100,charge+1)};
   onLvl=(p,v)=>{if(p.team===i)lv[p.id]={v:Math.max(0,Math.min(1,+v||0)),t:Date.now()}};
-  $('rh').innerHTML=`<b style="color:${T[i].c}">${T[i].name}</b> ตะโกน “ACCELERATE!”`;cap(`<em>${T[i].name}</em> ตะโกนใส่มือถือให้สุดเสียง!`,T[i].c);P({v:'roar',team:i,round:r,phase:'go'});
+  $('rh').innerHTML=`<b style="color:${T[i].c}">${T[i].name}</b> ${B('ตะโกน','shout')} “ACCELERATE!”`;cap(B(`<em>${T[i].name}</em> ตะโกนใส่มือถือให้สุดเสียง!`,`<em>${T[i].name}</em>, shout into your phones as loud as you can!`),T[i].c);P({v:'roar',team:i,round:r,phase:'go'});
   const t0=Date.now(),vus=[...document.querySelectorAll('#vu i')];
   const h=every(()=>{const now=Date.now(),dt=(now-last)/1000;last=now;const e=(now-t0)/1000;hudT('00:0'+Math.max(0,Math.ceil(TURN-e)));
-   const fresh=Object.values(lv).filter(x=>now-x.t<700);let n=0,src='พลังเสียงที่ชาร์จ';
-   if(fresh.length){n=fresh.reduce((a,x)=>a+x.v,0)/fresh.length*(.7+.3*Math.min(1,fresh.length/Math.max(1,team(i).length)));src=`รวมเสียงจากมือถือ ${fresh.length} เครื่อง`}
-   else if(MIC.on){n=Math.max(0,Math.min(1,(MIC.db()-ledBase-6)/30));src='ไมค์บนเวที'}
+   const fresh=Object.values(lv).filter(x=>now-x.t<700);let n=0,src=B('พลังเสียงที่ชาร์จ','Voice power charged');
+   if(fresh.length){n=fresh.reduce((a,x)=>a+x.v,0)/fresh.length*(.7+.3*Math.min(1,fresh.length/Math.max(1,team(i).length)));src=B(`รวมเสียงจากมือถือ ${fresh.length} เครื่อง`,`Combined voice from ${fresh.length} phones`)}
+   else if(MIC.on){n=Math.max(0,Math.min(1,(MIC.db()-ledBase-6)/30));src=B('ไมค์บนเวที','Stage mic')}
    else if(SIM&&!team(i).length){n=rnd(.55,.95)*Math.min(1,e/1.5)}
    charge=Math.min(100,charge+n*dt*K);
-   $('mt').style.width=(charge/100*60.5)+'%';$('db').textContent=Math.round(charge)+'%';$('src').textContent=src;
+   $('mt').style.width=(charge/100*60.5)+'%';$('db').textContent=Math.round(charge)+'%';if($('src').innerHTML!==src)$('src').innerHTML=src;
    vus.forEach((x,k)=>x.classList.toggle('on',k<Math.round(n*20)));led.classList.toggle('shake',n>.7&&!reduce);
    if(e>=TURN){clearInterval(h);onTap=null;onLvl=null;led.classList.remove('shake');pk[r][i]=Math.round(charge);$('db').textContent=pk[r][i]+'%';turn++;
-    P({v:'wait',k:'STAGE 03 · ROUND '+(r+1)+'/2',h:'จบตาของ '+T[i].name,p:'รอ MC ประกาศทีมถัดไป'});later(one,2500)}},80)};
- card('stage03_accelerate_bg.jpg','STAGE 03','ACCELERATE',T[2].c,'ทีละทีม <em>ตะโกนใส่มือถือ</em> ชาร์จพลังเสียงให้เต็ม',5000,()=>{setBg('stage03_accelerate_bg.jpg');look({shade:1,dof:1});buildLanes();moveRockets();later(one,200)})},
+    P({v:'wait',k:'STAGE 03 · ROUND '+(r+1)+'/2',h:B('จบตาของ '+T[i].name,T[i].name+' is done'),p:B('รอ MC ประกาศทีมถัดไป','Wait for the MC to call the next team')});later(one,2500)}},80)};
+ card('stage03_accelerate_bg.jpg','STAGE 03','ACCELERATE',T[2].c,B('ทีละทีม <em>ตะโกนใส่มือถือ</em> ชาร์จพลังเสียงให้เต็ม','One team at a time, <em>shout into your phones</em> to fully charge'),5000,()=>{setBg('stage03_accelerate_bg.jpg');look({shade:1,dof:1});buildLanes();moveRockets();later(one,200)})},
 /* 4 results */
 ()=>{const order=[0,1,2].sort((a,b)=>total(b)-total(a));const w=order[0];setBg('win_bg.jpg');look({full:1,scope:1});fx1('flare',1800);
  main(`<div class="win"><div class="podium"><div class="wn"><div class="kicker rv" style="color:var(--orange)">First to launch</div><h2 class="rv" style="--d:.4s"><span style="color:${T[w].c}">${T[w].name}</span></h2></div><img class="rk1" src="${ROCKET(w)}" alt=""></div><div class="rank">${order.map((i,k)=>`<div class="rrow rv ${k===0?'w':''}" style="--d:${1.2+k*.25}s"><span>0${k+1}</span><img src="${BADGE(i)}" alt=""><span style="color:${T[i].c}">${T[i].name}<small>${S.score[i].join(' · ')}</small></span><b>${total(i)}</b></div>`).join('')}</div></div>`);
- cap(`<em style="color:${T[w].c}">${T[w].name} CREW</em> เชิญขึ้นรับถ้วยบนเวที`);
- P({v:'rank',order,totals:T.map((t,i)=>total(i))});setNext(true,'ภารกิจสุดท้าย ▶')},
+ cap(`<em style="color:${T[w].c}">${T[w].name} CREW</em> `+B('เชิญขึ้นรับถ้วยบนเวที','please come up on stage for the trophy'));
+ P({v:'rank',order,totals:T.map((t,i)=>total(i))});setNext(true,B('ภารกิจสุดท้าย','Final mission')+' ▶')},
 /* 5 one orbit */
 ()=>{let p=90,run=false;setBg('led_bg_master.jpg');look({full:1});
  main(`<div class="ship"><div class="kicker rv">Final mission · 150 crew</div><img id="shipimg" class="rv" style="--d:.2s" src="${A}ship_mission2027.webp" alt=""><h2 id="sh" class="rv" style="--d:.4s">MISSION 2027</h2><div class="mbar"><div id="mb"></div></div><div class="mrow"><span>THRUST</span><b id="mp">90%</b></div></div>`);
- cap('สามทีมรวมเป็น<em>ยานลำเดียว</em> · ทั้งห้องลุกขึ้นยืน');
+ cap(B('สามทีมรวมเป็น<em>ยานลำเดียว</em> · ทั้งห้องลุกขึ้นยืน','Three teams become <em>one ship</em> · everyone stand up'));
  P({v:'final',phase:'wait'});onTap=()=>{if(run)p=Math.min(100,p+.08)};
  let c=5;
- later(()=>{look({full:1,scope:1});$('sh').textContent=c;hudT('0'+c);P({v:'final',phase:'count',c});cap('นับถอยหลัง<em>พร้อมกัน</em>');
+ later(()=>{look({full:1,scope:1});$('sh').textContent=c;hudT('0'+c);P({v:'final',phase:'count',c});cap(B('นับถอยหลัง<em>พร้อมกัน</em>','Count down <em>together</em>'));
   const cd=every(()=>{c--;if(c>0){$('sh').textContent=c;hudT('0'+c);P({v:'final',phase:'count',c});return}
-   clearInterval(cd);run=true;targetSpeed=1.6;$('sh').textContent='INNOVATE · ACCELERATE · EXECUTE';$('sh').style.cssText='font-size:2.8cqw!important;white-space:nowrap;letter-spacing:.14em';hudT('GO');P({v:'final',phase:'go'});cap('ทุกแตะ ทุกเสียง <em>ดันยานขึ้นวงโคจร</em>');
+   clearInterval(cd);run=true;targetSpeed=1.6;$('sh').textContent='INNOVATE · ACCELERATE · EXECUTE';$('sh').style.cssText='font-size:2.8cqw!important;white-space:nowrap;letter-spacing:.14em';hudT('GO');P({v:'final',phase:'go'});cap(B('ทุกแตะ ทุกเสียง <em>ดันยานขึ้นวงโคจร</em>','Every tap, every voice <em>pushes the ship into orbit</em>'));
    const h=every(()=>{p=Math.min(100,p+(SIM?.07:.03));$('mb').style.width=p+'%';$('mp').textContent=Math.floor(p)+'%';led.classList.toggle('shake',p>97&&!reduce);
     if(p>=100){clearInterval(h);run=false;finale()}},100)},1000)},1800);
  const finale=()=>{led.classList.remove('shake');$('shipimg').style.transform='translateY(-42cqw) scale(.35)';$('shipimg').style.filter='drop-shadow(0 0 4cqw #ffb36a) blur(.2cqw)';hudT('MISSION 2027');cap('');
   later(()=>{fx1('flash',1600);fx1('flare',1800);setBg('led_bg_warp.jpg');targetSpeed=reduce?.3:9;look({full:1,scope:1});
    main(`<div class="ship final"><div class="kicker rv" style="--d:.4s">Mission 2027 · Accomplished</div><h2 class="rv" style="--d:.6s">MISSION ACCOMPLISHED</h2><div class="tag3 rv" style="--d:1s"><span class="a">INNOVATE</span> • <span class="c">ACCELERATE</span> • <span>EXECUTE</span></div></div>`);
-   cap('THE NEXT FRONTIER · <em>150 คน หนึ่งภารกิจ</em>')},1200);
-  P({v:'final',phase:'done'});setNext(false,'จบภารกิจ ✓')}}
+   cap('THE NEXT FRONTIER · <em>'+B('150 คน หนึ่งภารกิจ','150 people, one mission')+'</em>')},1200);
+  P({v:'final',phase:'done'});setNext(false,B('จบภารกิจ','Mission complete')+' ✓')}}
 ];
 
 function drawQR(){const box=$('qr');if(!box)return;
@@ -457,13 +467,18 @@ function drawQR(){const box=$('qr');if(!box)return;
 $('next').onclick=()=>{if(!$('next').disabled&&S.scene<5)go(S.scene+1)};
 $('restart').onclick=()=>{reset();go(0)};
 $('sim').onclick=()=>{SIM=!SIM;simManual=true;simUI()};
+$('lang').onclick=()=>setLang(LANG==='en'?'th':'en');
 $('mic').onclick=()=>{MIC.err=0;MIC.start()};
 $('fs').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen?.().catch(()=>{})};
-addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();$('next').click()}else if(e.key==='r'||e.key==='R')$('restart').click();else if(e.key==='f'||e.key==='F')$('fs').click();else if(e.key==='s'||e.key==='S')$('sim').click();else if(e.key==='[')MIC.cal-=2;else if(e.key===']')MIC.cal+=2;wake()});
+addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();$('next').click()}else if(e.key==='r'||e.key==='R')$('restart').click();else if(e.key==='f'||e.key==='F')$('fs').click();else if(e.key==='s'||e.key==='S')$('sim').click();else if(e.key==='l'||e.key==='L')$('lang').click();else if(e.key==='[')MIC.cal-=2;else if(e.key===']')MIC.cal+=2;else if(e.key==='h'||e.key==='H'){if($('ops').classList.contains('hide'))wake(true);else hideOps()}});
 let idle;const embedded=parent!==window;
-function wake(){$('ops').classList.remove('hide');led.classList.remove('idle');clearTimeout(idle);idle=setTimeout(()=>{$('ops').classList.add('hide');led.classList.add('idle')},embedded?4500:3200)}
-addEventListener('pointermove',wake);addEventListener('pointerdown',wake);
-reset();go(0);wake();
+let overOps=false;const ops=$('ops');ops.addEventListener('pointerenter',()=>{overOps=true;clearTimeout(idle)});ops.addEventListener('pointerleave',()=>{overOps=false;wake()});
+function hideOps(){clearTimeout(idle);ops.classList.add('hide');led.classList.add('idle')}
+/* show the bar (and the cursor) only near the bottom edge; anywhere else the cursor shows briefly and the bar stays hidden */
+function wake(show){if(show)ops.classList.remove('hide');led.classList.remove('idle');clearTimeout(idle);if(overOps)return;idle=setTimeout(hideOps,show?(embedded?4500:2500):1500)}
+const hot=e=>e.clientY>innerHeight-Math.max(60,innerHeight*.07);
+addEventListener('pointermove',e=>wake(hot(e)||!ops.classList.contains('hide')&&overOps));addEventListener('pointerdown',e=>wake(hot(e)));
+reset();go(0);wake(true);
 </script>
 <div id="rtst" style="position:fixed;left:10px;bottom:8px;z-index:99;font:600 12px/1 system-ui,sans-serif;letter-spacing:.08em;color:#9fb3d9;background:#050a18cc;padding:6px 10px;border-radius:99px;transition:opacity .6s">● LOCAL</div>
 <script>(function(){const e=document.getElementById('rtst');let t;function show(s){const m={online:['● ONLINE','#5be38a'],connecting:['● CONNECTING…','#ffb347'],offline:['● OFFLINE · RECONNECTING','#ff6b6b'],off:['● LOCAL (same browser only)','#9fb3d9']}[s]||['● '+s,'#9fb3d9'];e.textContent=m[0];e.style.color=m[1];e.style.opacity=1;clearTimeout(t);if(s==='online')t=setTimeout(()=>e.style.opacity=0,6000)}
